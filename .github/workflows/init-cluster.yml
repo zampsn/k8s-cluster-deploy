@@ -50,12 +50,14 @@ jobs:
 
       - name: Terraform Apply
         id: tf-apply
-        if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          terraform apply -auto-approve -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+          terraform apply -auto-approve -no-color -input=false \ 
+            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
+            -var cluster_name=${{ inputs.cluster-name }}
 
       - name: Output Apply Summary
-        if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
