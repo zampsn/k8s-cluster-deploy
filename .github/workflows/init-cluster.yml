@@ -44,8 +44,8 @@ jobs:
 
       - name: Output Summary
         run: |
-          echo "#:gear: Init Cluster :gear:" >> $GITHUB_STEP_SUMMARY
-          echo "##:book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
+          echo "# ⚙ Init Cluster ⚙" >> $GITHUB_STEP_SUMMARY
+          echo "## 📖 Terraform Plan" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Terraform Apply
