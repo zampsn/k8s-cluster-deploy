@@ -1,4 +1,11 @@
 terraform {
+  cloud {
+    organization = "zampsn"
+    workspaces {
+      name = "k8s-cluster-deploy"
+    }
+  }
+
   required_providers {
     digitalocean = {
       source  = "digitalocean/digitalocean"
