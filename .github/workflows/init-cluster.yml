@@ -42,12 +42,20 @@ jobs:
         id: tf-plan
         run: terraform plan -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
 
-      - name: Output Summary
+      - name: Output Plan Summary
         run: |
-          echo "# ⚙ Init Cluster ⚙" >> $GITHUB_STEP_SUMMARY
-          echo "## 📖 Terraform Plan" >> $GITHUB_STEP_SUMMARY
+          echo "# :gear: Init Cluster :gear:" >> $GITHUB_STEP_SUMMARY
+          echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Terraform Apply
+        id: tf-apply
         if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
-        run: terraform apply -auto-approve -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+        run: |
+          terraform apply -auto-approve -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Output Apply Summary
+        if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
