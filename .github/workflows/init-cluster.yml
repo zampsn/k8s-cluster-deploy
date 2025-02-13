@@ -15,7 +15,9 @@ on:
       - .github/workflows/init-cluster.yml
   push:
     branches: [ main ]
-    paths: [ init-cluster/** ]
+    paths:
+      - init-cluster/**
+      - .github/workflows/init-cluster.yml
 
 jobs:
   terraform:
