@@ -1,4 +1,4 @@
-name: Initalize K8s Cluster on DigitalOcean
+name: Initialize K8s Cluster on DigitalOcean
 
 on:
   workflow_dispatch:
@@ -46,7 +46,7 @@ jobs:
         run: |
           echo "#:gear: Init Cluster :gear:" >> $GITHUB_STEP_SUMMARY
           echo "##:book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.tf-plan.outputs.stdout }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Terraform Apply
         if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
