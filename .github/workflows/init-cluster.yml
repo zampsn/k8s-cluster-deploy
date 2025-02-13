@@ -30,9 +30,8 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
-      - name: Authenticate Terraform
-        run: echo "${{ secrets.TERRAFORM_TOKEN }}" | terraform login
+        with:
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_TOKEN }}
 
       - name: Terraform init
         run: terraform init
