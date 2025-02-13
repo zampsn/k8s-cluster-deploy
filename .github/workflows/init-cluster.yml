@@ -1,0 +1,61 @@
+name: Initialize K8s Cluster on DigitalOcean
+
+on:
+  workflow_dispatch:
+    inputs:
+      cluster-name:
+        type: string
+        required: true
+        description: Name of the K8s cluster
+  pull_request:
+    branches: [ main ]
+    paths: [ init-cluster/** ]
+  push:
+    branches: [ main ]
+    paths: [ init-cluster/** ]
+
+jobs:
+  terraform:
+    name: Run the Terraform Deployment
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./init-cluster
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        run: terraform init # Should probably store the tf state in an S3 bucket or something
+
+      - name: Terraform format
+        run: terraform fmt -check
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: tf-plan
+        run: terraform plan -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Output Plan Summary
+        run: |
+          echo "# :gear: Init Cluster :gear:" >> $GITHUB_STEP_SUMMARY
+          echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Terraform Apply
+        id: tf-apply
+        if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
+        run: |
+          terraform apply -auto-approve -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Output Apply Summary
+        if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
