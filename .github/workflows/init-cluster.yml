@@ -44,6 +44,7 @@ jobs:
         run: terraform validate
 
       - name: Terraform plan
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         id: tf-plan
         run: |
           terraform plan -no-color -input=false \
@@ -51,6 +52,7 @@ jobs:
             -var cluster_name=${{ inputs.cluster-name || 'main' }}
 
       - name: Output Plan Summary
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         run: |
           echo "# :gear: Init Cluster :gear:" >> $GITHUB_STEP_SUMMARY
           echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
