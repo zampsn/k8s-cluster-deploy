@@ -9,7 +9,9 @@ on:
         description: Name of the K8s cluster
   pull_request:
     branches: [ main ]
-    paths: [ init-cluster/** ]
+    paths:
+      - init-cluster/**
+      - .github/workflows/init-cluster.yml
   push:
     branches: [ main ]
     paths: [ init-cluster/** ]
@@ -40,7 +42,9 @@ jobs:
 
       - name: Terraform plan
         id: tf-plan
-        run: terraform plan -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+        run: |
+          terraform plan -no-color -input=false \
+            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Output Plan Summary
         run: |
@@ -48,14 +52,19 @@ jobs:
           echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
 
+      - name: Output debug info
+        run: echo "event = ${{ github.event_name }}"
+
       - name: Terraform Apply
         id: tf-apply
-        if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          terraform apply -auto-approve -no-color -input=false -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+          terraform apply -auto-approve -no-color -input=false \
+            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
+            -var cluster_name=${{ inputs.cluster-name }}
 
       - name: Output Apply Summary
-        if: ${{ github.ref == 'ref/heads/main' && github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
