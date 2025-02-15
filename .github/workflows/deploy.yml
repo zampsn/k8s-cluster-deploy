@@ -2,15 +2,8 @@ on:
   workflow_dispatch:
   push:
     branches: [ main ]
-    paths:
-      - apps/**
-      - manifests/**
   pull_request:
     branches: [ main ]
-    paths:
-      - apps/**
-      - manifests/**
-      - .github/workflows/deploy.yml
 
 jobs:
   deploy:
@@ -27,8 +20,13 @@ jobs:
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
 
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
       - name: Save kubeconfig
         run: doctl kubernetes cluster kubeconfig save main
 
-      - name: Verify kubectl connection
-        run: kubectl get nodes
+      - name: Deploy Helm chart from hello-world Directory
+        run: |
+          helm upgrade --install hello-world ./hello-world \
+            --namespace default
