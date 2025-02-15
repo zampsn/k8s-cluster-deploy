@@ -26,6 +26,60 @@ jobs:
       - name: Save kubeconfig
         run: doctl kubernetes cluster kubeconfig save main
 
+      - name: Deploy Nginx ingress controller
+        run: |
+          helm repo add nginx-stable https://helm.nginx.com/stable
+          helm repo update
+          helm upgrade --install nginx-ingress nginx-stable/nginx-ingress \
+            --namespace ingress-nginx --create-namespace
+
+      - name: Get load balancer IP
+        id: loadbalancer
+        run: |
+          EXTERNAL_IP=$(kubectl get svc -n ingress-nginx nginx-ingress-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "ip=$EXTERNAL_IP" >> $GITHUB_OUTPUT
+
+      - name: Create DNS record for Authentik
+        run: |
+          RECORD_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records?type=A&name=auth.example.com" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
+            -H "Content-Type: application/json" | jq -r '.result[0].id')
+
+          if [ "$RECORD_ID" = "null" ]; then
+            echo "Creating new DNS record"
+            curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data '{
+                "type": "A",
+                "name": "auth.zachsampson.dev",
+                "content": "${{ steps.loadbalancer.outputs.ip }}",
+                "ttl": 3600,
+                "proxied": false
+              }'
+          else
+            echo "Updating existing DNS record"
+            curl -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records/$RECORD_ID" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data '{
+                "type": "A",
+                "name": "auth.zachsampson.dev",
+                "content": "${{ steps.loadbalancer.outputs.ip }}",
+                "ttl": 3600,
+                "proxied": false
+              }'
+          fi
+
+
+      - name: Deploy Authentik
+        run: |
+          helm repo add authentik https://charts.goauthentik.io
+          helm repo update
+          helm upgrade --install authentik authentik/authentik \
+            --namespace authentik --create-namespace \
+            --set server.externalHost=auth.zachsampson.dev
+
       - name: Deploy Helm chart from hello-world Directory
         run: |
           helm upgrade --install hello-world ./hello-world \
