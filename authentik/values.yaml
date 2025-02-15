@@ -6,10 +6,10 @@ server:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-body-size: 64m
     hosts:
-      - host: "auth.zachsampson.dev"
-        paths:
-          - path: /
-            pathType: Prefix
+      - "auth.zachsampson.dev"
+    paths:
+      - path: /
+        pathType: Prefix
     tls:
       - hosts:
           - "auth.zachsampson.dev"
