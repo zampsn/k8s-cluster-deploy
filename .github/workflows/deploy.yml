@@ -39,41 +39,47 @@ jobs:
       - name: Get load balancer IP
         id: loadbalancer
         run: |
-          EXTERNAL_IP=$(kubectl get svc -n ingress-private nginx-ingress-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          echo "ip=$EXTERNAL_IP" >> $GITHUB_OUTPUT
+          EXTERNAL_IP=$(kubectl get svc -n ingress-private nginx-private-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "EXTERNAL_IP=$EXTERNAL_IP" >> $GITHUB_ENV
+          echo "Load Balancer IP is: $EXTERNAL_IP"
 
       - name: Create DNS record for Authentik
         run: |
-          RECORD_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records?type=A&name=auth.example.com" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
+          # Load the IP from the environment variable
+          EXTERNAL_IP=${{ env.EXTERNAL_IP }}
+          
+          echo "Updating DNS for auth.zachsampson.dev with IP $EXTERNAL_IP"
+          
+          # Check if the DNS record already exists
+          RECORD_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records?type=A&name=auth.zachsampson.dev" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" | jq -r '.result[0].id')
 
           if [ "$RECORD_ID" = "null" ]; then
             echo "Creating new DNS record"
             curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
-              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
               -H "Content-Type: application/json" \
               --data '{
                 "type": "A",
                 "name": "auth.zachsampson.dev",
-                "content": "${{ steps.loadbalancer.outputs.ip }}",
+                "content": "'"$EXTERNAL_IP"'",
                 "ttl": 3600,
                 "proxied": false
               }'
           else
             echo "Updating existing DNS record"
             curl -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records/$RECORD_ID" \
-              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
               -H "Content-Type: application/json" \
               --data '{
                 "type": "A",
                 "name": "auth.zachsampson.dev",
-                "content": "${{ steps.loadbalancer.outputs.ip }}",
+                "content": "'"$EXTERNAL_IP"'",
                 "ttl": 3600,
                 "proxied": false
               }'
           fi
-
 
       - name: Deploy Authentik
         run: |
