@@ -33,7 +33,8 @@ jobs:
           helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
             --namespace ingress-nginx --create-namespace \
             --set controller.replicaCount=2 \
-            --set controller.service.type=LoadBalancer
+            --set controller.service.type=LoadBalancer \
+            --set fullnameOverride=nginx
 
 
       - name: Get load balancer IP
