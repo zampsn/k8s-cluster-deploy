@@ -28,10 +28,13 @@ jobs:
 
       - name: Deploy Nginx ingress controller
         run: |
-          helm repo add nginx-stable https://helm.nginx.com/stable
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
           helm repo update
-          helm upgrade --install nginx-ingress nginx-stable/nginx-ingress \
-            --namespace ingress-nginx --create-namespace
+          helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx --create-namespace \
+            --set controller.replicaCount=2 \
+            --set controller.service.type=LoadBalancer
+
 
       - name: Get load balancer IP
         id: loadbalancer
