@@ -87,7 +87,7 @@ jobs:
           helm repo update
           helm upgrade --install authentik authentik/authentik \
             --namespace authentik --create-namespace \
-            --set server.externalHost=auth.zachsampson.dev
+            -f authentik/values.yaml
 
       - name: Deploy Helm chart from hello-world Directory
         run: |
