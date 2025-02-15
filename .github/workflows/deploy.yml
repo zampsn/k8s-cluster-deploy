@@ -30,17 +30,16 @@ jobs:
         run: |
           helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
           helm repo update
-          helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
-            --namespace ingress-nginx --create-namespace \
+          helm upgrade --install nginx-ingress-private ingress-nginx/ingress-nginx \
+            --namespace ingress-private --create-namespace \
             --set controller.replicaCount=2 \
             --set controller.service.type=LoadBalancer \
-            --set fullnameOverride=nginx
-
+            --set fullnameOverride=nginx-ingress
 
       - name: Get load balancer IP
         id: loadbalancer
         run: |
-          EXTERNAL_IP=$(kubectl get svc -n ingress-nginx nginx-ingress-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          EXTERNAL_IP=$(kubectl get svc -n ingress-private nginx-ingress-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           echo "ip=$EXTERNAL_IP" >> $GITHUB_OUTPUT
 
       - name: Create DNS record for Authentik
