@@ -1,0 +1,34 @@
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - apps/**
+      - manifests/**
+  pull_request:
+    branches: [ main ]
+    paths:
+      - apps/**
+      - manifests/**
+      - .github/workflows/deploy.yml
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Install Kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Save kubeconfig
+        run: doctl kubernetes cluster kubeconfig save main
+
+      - name: Verify kubectl connection
+        run: kubectl get nodes
