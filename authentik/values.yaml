@@ -5,13 +5,12 @@ server:
       nginx.ingress.kubernetes.io/rewrite-target: /
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-body-size: 64m
-    externalHost: auth.zachsampson.dev
     hosts:
-      - host: auth.zachsampson.dev
+      - host: "auth.zachsampson.dev"
         paths:
           - path: /
             pathType: Prefix
     tls:
       - hosts:
-          - auth.zachsampson.dev
+          - "auth.zachsampson.dev"
         secretName: authentik-tls
