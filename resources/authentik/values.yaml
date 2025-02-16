@@ -12,7 +12,7 @@ server:
       nginx.ingress.kubernetes.io/ssl-redirect: true
       nginx.ingress.kubernetes.io/proxy-ssl-verify: off
       nginx.ingress.kubernetes.io/x-forwarded-proto: https
-  environment:
+  env:
     - name: AUTHENTIK_HOST
       value: https://authentik.cluster.zachsampson.dev
     - name: EXTERNAL_URL
