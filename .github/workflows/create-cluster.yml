@@ -167,7 +167,7 @@ jobs:
           terraform plan -no-color -input=false -out tf_plan.txt \
             -var cloudflare_token=${{ secrets.CLOUDFLARE_TOKEN }} \
             -var cloudflare_domain=${{ env.CLOUDFLARE_DOMAIN }} \
-            -var subdomain_name="*.${{ env.CLUSTER_NAME }}" \
+            -var subdomain_name="*.${{ env.CLUSTER_NAME }}-cluster" \
             -var target_ip=${{ needs.ingress-nginx.outputs.external-ip }}
           
           if terraform show -no-color tf_plan.txt | grep -q "No changes."; then
