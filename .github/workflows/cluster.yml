@@ -23,7 +23,6 @@ jobs:
       apply: false
       working-directory: ./cluster
       tf-args: |
-        -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
         -var cluster_name=${{ env.CLUSTER_NAME }}
     secrets: inherit
 

@@ -41,7 +41,8 @@ jobs:
       - name: Terraform plan
         id: tf-plan
         run: |
-          terraform plan -no-color -input=false -out tf_plan.txt ${{ inputs.additional-args }}
+          terraform plan -no-color -input=false -out tf_plan.txt ${{ inputs.tf-args }}\
+              -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} 
 
       - name: Output Plan Summary
         run: |
