@@ -27,10 +27,9 @@ jobs:
         id: cluster
         run: |
           TF_ARGS=$(cat <<EOF
-          -var cluster_name=${{ env.CLUSTER_NAME }} \
+          -var cluster_name=${{ env.CLUSTER_NAME }}
           -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
-          EOF
-          )
+          EOF)
           echo "tf-args=$TF_ARGS" >> $GITHUB_OUTPUT
 
   cluster:
