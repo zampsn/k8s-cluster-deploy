@@ -1,0 +1,4 @@
+containerPort: 8080
+name: hello-world
+image: docker.io/zachsampson/go-hello:latest
+host: test.zachsampson.dev
