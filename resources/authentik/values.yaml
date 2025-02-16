@@ -6,6 +6,7 @@ server:
   ingress:
     ingressClassName: nginx
     enabled: true
+    https: true
     hosts:
       - authentik.cluster.zachsampson.dev
 
