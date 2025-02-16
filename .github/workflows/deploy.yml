@@ -46,6 +46,6 @@ jobs:
             --repo https://charts.goauthentik.io \
             --namespace authentik --create-namespace \
             --set authentik.secret_key=${{ secrets.AUTHENTIK_SECRET_KEY }} \
-            --set authentik.postgres.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
-            --set postgres.auth.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
+            --set authentik.postgresql.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
+            --set postgresql.auth.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
             -f ./resources/authentik/values.yaml 
