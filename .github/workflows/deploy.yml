@@ -38,7 +38,7 @@ jobs:
       - name: Deploy hello world app
         run: |
           helm upgrade --install hello-world ./docker-helm \
-            --namespace sandbox --create-namespace
+            --namespace sandbox --create-namespace \
             -f ./resources/hello-world/values.yaml
 
 #      - name: Get load balancer IP
