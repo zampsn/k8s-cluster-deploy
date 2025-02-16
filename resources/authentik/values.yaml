@@ -1,4 +1,9 @@
 authentik:
+  environment:
+    - name: AUTHENTIK_HOST
+      value: https://authentik.cluster.zachsampson.dev
+    - name: EXTERNAL_URL
+      value: https://authentik.cluster.zachsampson.dev
   error_reporting:
     enabled: false
 
@@ -6,9 +11,12 @@ server:
   ingress:
     ingressClassName: nginx
     enabled: true
-    https: true
     hosts:
       - authentik.cluster.zachsampson.dev
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: true
+      nginx.ingress.kubernetes.io/proxy-ssl-verify: off
+      nginx.ingress.kubernetes.io/x-forwarded-proto: https
 
 postgresql:
   enabled: true
