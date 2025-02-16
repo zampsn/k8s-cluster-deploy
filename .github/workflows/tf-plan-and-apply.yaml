@@ -10,6 +10,10 @@ on:
         description: Whether to apply the changes or not
         required: false
         default: false
+      cluster-name:
+        type: string
+        description: Name of the Kubernetes cluster
+        required: true
 
 jobs:
   plan:
@@ -38,7 +42,7 @@ jobs:
         id: tf-plan
         run: |
           terraform plan -no-color -input=false -out tf_plan.txt \
-            -var cluster_name=${{ env.CLUSTER_NAME }} \
+            -var cluster_name=${{ inputs.cluster-name }} \
             -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Output Plan Summary
@@ -70,7 +74,9 @@ jobs:
       - name: Terraform Apply
         id: tf-apply
         run: |
-          terraform apply -auto-approve -no-color -input=false ./tf_plan.txt ${{ inputs.tf-args }}
+          terraform apply -auto-approve -no-color -input=false ./tf_plan.txt \
+            -var cluster_name=${{ inputs.cluster-name }} \
+            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Output Apply Summary
         run: |

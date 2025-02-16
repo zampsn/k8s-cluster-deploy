@@ -22,4 +22,5 @@ jobs:
     with:
       apply: false
       working-directory: ./cluster
+      cluster-name: ${{ env.CLUSTER_NAME }}
     secrets: inherit
