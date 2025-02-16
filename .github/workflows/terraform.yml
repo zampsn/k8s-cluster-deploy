@@ -1,26 +1,27 @@
+name: Create K8s Cluster on DigitalOcean
+
 on:
-  workflow_call:
-    inputs:
-      working-directory:
-        type: string
-        description: Directory containing Terraform files
-        required: true
-      apply:
-        type: boolean
-        description: Whether to apply the changes or not
-        required: false
-        default: false
-      cluster-name:
-        type: string
-        description: Name of the Kubernetes cluster
-        required: true
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ../../terraform/**
+      - .github/workflows/cluster.yml
+  push:
+    branches: [ main ]
+    paths:
+      - ../../terraform/**
+      - .github/workflows/cluster.yml
+
+env:
+  CLUSTER_NAME: main
 
 jobs:
   plan:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ./terraform
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,7 +43,7 @@ jobs:
         id: tf-plan
         run: |
           terraform plan -no-color -input=false -out tf_plan.txt \
-            -var cluster_name=${{ inputs.cluster-name }} \
+            -var cluster_name=${{ env.CLUSTER_NAME }} \
             -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Output Plan Summary
@@ -59,7 +60,7 @@ jobs:
   apply:
     needs: plan
     runs-on: ubuntu-latest
-    if: ${{ inputs.apply }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Download plan
         uses: actions/download-artifact@v4
@@ -75,7 +76,7 @@ jobs:
         id: tf-apply
         run: |
           terraform apply -auto-approve -no-color -input=false ./tf_plan.txt \
-            -var cluster_name=${{ inputs.cluster-name }} \
+            -var cluster_name=${{ env.CLUSTER_NAME }} \
             -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Output Apply Summary
