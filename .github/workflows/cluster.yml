@@ -17,92 +17,26 @@ env:
   CLUSTER_NAME: main
 
 jobs:
+  # GitHub limitation, we can't do this directly in the with block :(
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      cluster-args: ${{ steps.cluster.outputs.tf-args }}
+    steps:
+      - name: Create cluster args
+        id: cluster
+        run: |
+          TF_ARGS=$(cat <<EOF
+          -var cluster_name=${{ env.CLUSTER_NAME }} \
+          -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+          EOF)
+          echo "tf-args=$TF_ARGS" >> $GITHUB_OUTPUT
+
   cluster:
+    needs: prepare
     uses: ./.github/workflows/tf-plan-and-apply.yaml
     with:
       apply: false
       working-directory: ./cluster
-      tf-args: |
-        -var cluster_name=${{ env.CLUSTER_NAME }}
+      tf-args: ${{ needs.prepare.outputs.cluster-args }}
     secrets: inherit
-
-  #
-  #    name: Create cluster with Terraform
-  #    runs-on: ubuntu-latest
-  #    defaults:
-  #      run:
-  #        shell: bash
-  #        working-directory: ./terraform
-  #    steps:
-  #      - name: Checkout code
-  #        uses: actions/checkout@v4
-  #
-  #      - name: Setup Terraform
-  #        uses: hashicorp/setup-terraform@v3
-  #        with:
-  #          cli_config_credentials_token: ${{ secrets.TERRAFORM_TOKEN }}
-  #
-  #      - name: Terraform init
-  #        run: terraform init
-  #
-  #      - name: Terraform format and validate
-  #        run: |
-  #          terraform fmt -check
-  #          terraform validate
-  #
-  #      - name: Terraform plan
-  #        if: ${{ github.ref != 'refs/heads/main' }}
-  #        id: tf-plan
-  #        run: |
-  #          terraform plan -no-color -input=false \
-  #            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
-  #            -var cluster_name=${{ env.CLUSTER_NAME }}
-  #
-  #      - name: Output Plan Summary
-  #        if: ${{ github.ref != 'refs/heads/main' }}
-  #        run: |
-  #          echo "# :gear: Init Cluster :gear:" >> $GITHUB_STEP_SUMMARY
-  #          echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
-  #          echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
-  #
-  #      - name: Terraform Apply
-  #        id: tf-apply
-  #        # if: ${{ github.ref == 'refs/heads/main' }}
-  #        run: |
-  #          terraform apply -auto-approve -no-color -input=false \
-  #            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
-  #            -var cluster_name=${{ env.CLUSTER_NAME }}
-  #
-  #      - name: Output Apply Summary
-  #        # if: ${{ github.ref == 'refs/heads/main' }}
-  #        run: |
-  #          echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
-  #          echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
-
-#  ingress:
-#    name: Create Nginx ingress
-#    runs-on: ubuntu-latest
-#    needs: terraform
-#    # if: ${{ github.ref == 'refs/heads/main' }}
-#    steps:
-#      - name: Install doctl
-#        uses: digitalocean/action-doctl@v2
-#        with:
-#          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-#
-#      - name: Install Kubectl
-#        uses: azure/setup-kubectl@v3
-#
-#      - name: Install Helm
-#        uses: azure/setup-helm@v3
-#
-#      - name: Save kubeconfig
-#        run: doctl kubernetes cluster kubeconfig save ${{ env.CLUSTER_NAME }}
-#
-#      - name: Deploy Nginx ingress controller
-#        run: |
-#          helm upgrade --install ingress-nginx ingress-nginx \
-#            --repo https://kubernetes.github.io/ingress-nginx \
-#            --namespace ingress-nginx --create-namespace \
-#            --set controller.replicaCount=2 \
-#            --set fullnameOverride=nginx
