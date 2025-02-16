@@ -1,6 +1,6 @@
 authentik:
   error_reporting:
-    enabled: true
+    enabled: false
 
 server:
   ingress:
