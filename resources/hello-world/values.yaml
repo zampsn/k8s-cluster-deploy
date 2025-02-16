@@ -3,4 +3,4 @@ name: hello-world
 image: docker.io/zachsampson/go-hello:latest
 ingress:
   enabled: true
-  host: test.zachsampson.dev
+  host: hello.cluster.zachsampson.dev

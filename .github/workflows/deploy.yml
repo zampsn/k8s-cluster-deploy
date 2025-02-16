@@ -28,12 +28,11 @@ jobs:
 
       - name: Deploy Nginx ingress controller
         run: |
-          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-          helm repo update
-          helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+          helm upgrade --install ingress-nginx ingress-nginx \
+            --repo https://kubernetes.github.io/ingress-nginx \
             --namespace ingress-nginx --create-namespace \
             --set controller.replicaCount=2 \
-            --set fullnameOverride=ingress-nginx
+            --set fullnameOverride=nginx
 
       - name: Deploy hello world app
         run: |
@@ -41,60 +40,12 @@ jobs:
             --namespace sandbox --create-namespace \
             -f ./resources/hello-world/values.yaml
 
-#      - name: Get load balancer IP
-#        id: loadbalancer
-#        run: |
-#          EXTERNAL_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-#          echo "EXTERNAL_IP=$EXTERNAL_IP" >> $GITHUB_ENV
-#          echo "Load Balancer IP is: $EXTERNAL_IP"
-#
-#      - name: Create DNS record for hello app
-#        run: |
-#          # Load the IP from the environment variable
-#          EXTERNAL_IP=${{ env.EXTERNAL_IP }}
-#
-#          echo "Updating DNS for hello.zachsampson.dev with IP $EXTERNAL_IP"
-#
-#          # Check if the DNS record already exists
-#          RECORD_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records?type=A&name=auth.zachsampson.dev" \
-#            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
-#            -H "Content-Type: application/json" | jq -r '.result[0].id')
-#
-#          if [ "$RECORD_ID" = "null" ]; then
-#            echo "Creating new DNS record"
-#            curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
-#              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
-#              -H "Content-Type: application/json" \
-#              --data '{
-#                "type": "A",
-#                "name": "auth.zachsampson.dev",
-#                "content": "'"$EXTERNAL_IP"'",
-#                "ttl": 3600,
-#                "proxied": false
-#              }'
-#          else
-#            echo "Updating existing DNS record"
-#            curl -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records/$RECORD_ID" \
-#              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_TOKEN }}" \
-#              -H "Content-Type: application/json" \
-#              --data '{
-#                "type": "A",
-#                "name": "auth.zachsampson.dev",
-#                "content": "'"$EXTERNAL_IP"'",
-#                "ttl": 3600,
-#                "proxied": false
-#              }'
-#          fi
-#
-#      - name: Deploy Authentik
-#        run: |
-#          helm repo add authentik https://charts.goauthentik.io
-#          helm repo update
-#          helm upgrade --install authentik authentik/authentik \
-#            --namespace authentik --create-namespace \
-#            -f authentik/values.yaml
-#
-#      - name: Deploy Helm chart from hello-world Directory
-#        run: |
-#          helm upgrade --install hello-world ./hello-world \
-#            --namespace hello-world --create-namespace
+      - name: Deploy Authentik
+        run: |
+          helm upgrade --install authentik authentik \
+            --repo https://charts.goauthentik.io \
+            --namespace authentik --create-namespace \
+            --set authentik.secret_key=${{ secrets.AUTHENTIK_SECRET_KEY }} \
+            --set authentik.postgres.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
+            --set postgres.auth.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
+            -f authentik/values.yaml 
