@@ -50,5 +50,5 @@ jobs:
       - name: Install helm chart
         run: |
           helm upgrade --install ${{ inputs.release-name }} ./k8s-cluster-deploy/docker-helm \
-            --namespace ${{ inputs.namespace }} --create-namespace
+            --namespace ${{ inputs.namespace }} --create-namespace \
             -f ${{ inputs.values-file }}
