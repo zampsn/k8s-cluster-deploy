@@ -5,12 +5,12 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - ../../terraform/**
+      - ../../terraform/**/*
       - .github/workflows/cluster.yml
   push:
     branches: [ main ]
     paths:
-      - ../../terraform/**
+      - ../../terraform/**/*
       - .github/workflows/cluster.yml
 
 env:
