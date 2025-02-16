@@ -2,7 +2,7 @@ terraform {
   cloud {
     organization = "zampsn"
     workspaces {
-      name = "k8s-cluster-deploy"
+      name = "cluster-deploy"
     }
   }
 

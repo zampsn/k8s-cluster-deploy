@@ -15,13 +15,15 @@ on:
 
 env:
   CLUSTER_NAME: main
+  CLOUDFLARE_DOMAIN: zachsampson.dev
 
 jobs:
-  plan:
+  create-cluster:
     runs-on: ubuntu-latest
+    name: Create cluster on DigitalOcean
     defaults:
       run:
-        working-directory: ./terraform
+        working-directory: ./terraform/cloudflare
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,6 +50,7 @@ jobs:
 
       - name: Output Plan Summary
         run: |
+          echo "# Create Cluster" >> $GITHUB_STEP_SUMMARY
           echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
 
@@ -57,29 +60,138 @@ jobs:
           name: tf_plan
           path: tf_plan.txt
 
-  apply:
-    needs: plan
+      - name: Terraform Apply
+        if: ${{ github.ref == 'refs/heads/main' }}
+        id: tf-apply
+        run: |
+          terraform apply -auto-approve -no-color -input=false ./tf_plan.txt \
+            -var cluster_name=${{ env.CLUSTER_NAME }} \
+            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} 
+
+      - name: Output Apply Summary
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  ingress-nginx:
+    needs: create-cluster
     runs-on: ubuntu-latest
+    name: Create Nginx ingress controller
     if: ${{ github.ref == 'refs/heads/main' }}
+    outputs:
+      external-ip: ${{ steps.loadbalancer.outputs.external-ip || '0.0.0.0' }}
     steps:
-      - name: Download plan
-        uses: actions/download-artifact@v4
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
-          name: tf_plan
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Install Kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Save kubeconfig
+        run: doctl kubernetes cluster kubeconfig save ${{ env.CLUSTER_NAME }}
+
+      - name: Deploy Nginx ingress controller
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          helm upgrade --install ingress-nginx ingress-nginx \
+            --repo https://kubernetes.github.io/ingress-nginx \
+            --namespace ingress-nginx --create-namespace \
+            --set controller.replicaCount=2 \
+            --set fullnameOverride=nginx
+
+      - name: Dry run Nginx ingress controller
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: |
+          helm install --dry-run ingress-nginx ingress-nginx \
+            --repo https://kubernetes.github.io/ingress-nginx \
+            --namespace ingress-nginx --create-namespace \
+            --set controller.replicaCount=2 \
+            --set fullnameOverride=nginx
+
+      - name: Get load balancer IP
+        if: ${{ github.ref == 'refs/heads/main' }}
+        id: loadbalancer
+        run: |
+          attempt=0
+          while [ $attempt -lt 100 ]; do
+            externalIP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            if [ -n "$externalIP" ]; then
+              echo "external-ip=$externalIP" >> $GITHUB_OUTPUT
+              break
+            else
+              sleep 10
+            fi
+            attempt=$((attempt+1))
+          done
+          
+          if [ -z "$externalIP" ]; then
+            echo "::error::Timed out waiting for load balancer IP"
+            exit 1
+          fi
+
+  create-cloudflare-dns:
+    runs-on: ubuntu-latest
+    needs: ingress-nginx
+    name: Create cloudflare DNS record
+    defaults:
+      run:
+        working-directory: ./terraform/cloudflare
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           cli_config_credentials_token: ${{ secrets.TERRAFORM_TOKEN }}
 
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform format and validate
+        run: |
+          terraform fmt -check
+          terraform validate
+
+      - name: Terraform plan
+        id: tf-plan
+        run: |
+          terraform plan -no-color -input=false -out tf_plan.txt \
+            -var cloudflare_token=${{ secrets.CLOUDFLARE_TOKEN }} \
+            -var cloudflare_domain=${{ env.CLOUDFLARE_DOMAIN }} \
+            -var subdomain_name="*.${{ env.CLUSTER_NAME }}" \
+            -var target_ip=${{ needs.ingress-nginx.outputs.external-ip }}
+
+      - name: Output Plan Summary
+        run: |
+          echo "# Create Cloudflare DNS" >> $GITHUB_STEP_SUMMARY
+          echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`${{ steps.tf-plan.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf_plan
+          path: tf_plan.txt
+
       - name: Terraform Apply
+        if: ${{ github.ref == 'refs/heads/main' }}
         id: tf-apply
         run: |
           terraform apply -auto-approve -no-color -input=false ./tf_plan.txt \
-            -var cluster_name=${{ env.CLUSTER_NAME }} \
-            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
+            -var cloudflare_token=${{ secrets.CLOUDFLARE_TOKEN }} \
+            -var cloudflare_domain=${{ env.CLOUDFLARE_DOMAIN }} \
+            -var subdomain_name="*.${{ env.CLUSTER_NAME }}" \
+            -var target_ip=${{ needs.ingress-nginx.outputs.external-ip }}
 
       - name: Output Apply Summary
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
