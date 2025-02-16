@@ -39,13 +39,3 @@ jobs:
           helm upgrade --install hello-world ./docker-helm \
             --namespace sandbox --create-namespace \
             -f ./resources/hello-world/values.yaml
-
-      - name: Deploy Authentik
-        run: |
-          helm upgrade --install authentik authentik \
-            --repo https://charts.goauthentik.io \
-            --namespace authentik --create-namespace \
-            --set authentik.secret_key=${{ secrets.AUTHENTIK_SECRET_KEY }} \
-            --set authentik.postgresql.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
-            --set postgresql.auth.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
-            -f ./resources/authentik/values.yaml 
