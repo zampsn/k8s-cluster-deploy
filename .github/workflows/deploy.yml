@@ -48,4 +48,4 @@ jobs:
             --set authentik.secret_key=${{ secrets.AUTHENTIK_SECRET_KEY }} \
             --set authentik.postgres.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
             --set postgres.auth.password=${{ secrets.AUTHENTIK_POSTGRES_PASSWORD }} \
-            -f authentik/values.yaml 
+            -f ./resources/authentik/values.yaml 

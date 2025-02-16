@@ -1,9 +1,6 @@
 authentik:
-  secret_key: "PleaseGenerateASecureKey"
   error_reporting:
     enabled: true
-  postgresql:
-    password: "ThisIsNotASecurePassword"
 
 server:
   ingress:
