@@ -1,0 +1,54 @@
+name: Deploy Docker Container
+
+on:
+  workflow_call:
+    inputs:
+      values-file:
+        type: string
+        required: true
+        description: Path to your values.yml
+      release-name:
+        type: string
+        required: true
+        description: Name of the helm release
+      cluster-name:
+        type: string
+        required: true
+        description: Name of the Kubernetes cluster
+      namespace:
+        type: string
+        required: true
+        description: Namespace to install the chart in
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Docker container
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout helm chart repo
+        uses: actions/checkout@v4
+        with:
+          repository: zampsn/k8s-cluster-deploy
+          path: k8s-cluster-deploy
+          token: ${{ github.token }}
+
+      - name: Setup helm
+        uses: azure/setup-helm@v3
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Setup kubeconfig
+        run: |
+          doctl kubernetes cluster kubeconfig save ${{ inputs.cluster-name }} 
+
+      - name: Install helm chart
+        run: |
+          helm upgrade --install ${{ inputs.release-name }} ./k8s-cluster-deploy/docker-helm \
+            --namespace ${{ inputs.namespace }} --create-namespace
+            -f ${{ inputs.values-file }}
