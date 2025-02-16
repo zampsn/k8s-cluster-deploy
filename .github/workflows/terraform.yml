@@ -20,7 +20,7 @@ jobs:
     name: Create cluster on DigitalOcean
     defaults:
       run:
-        working-directory: ./terraform/cloudflare
+        working-directory: ./terraform/cluster
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
