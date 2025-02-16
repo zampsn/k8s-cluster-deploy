@@ -75,7 +75,6 @@ jobs:
     needs: create-cluster
     runs-on: ubuntu-latest
     name: Create Nginx ingress controller
-    if: ${{ github.ref == 'refs/heads/main' }}
     outputs:
       external-ip: ${{ steps.loadbalancer.outputs.external-ip || '0.0.0.0' }}
     steps:
