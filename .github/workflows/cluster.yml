@@ -17,25 +17,9 @@ env:
   CLUSTER_NAME: main
 
 jobs:
-  # GitHub limitation, we can't do this directly in the with block :(
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      cluster-args: ${{ steps.cluster.outputs.tf-args }}
-    steps:
-      - name: Create cluster args
-        id: cluster
-        run: |
-          TF_ARGS=$(cat <<EOF
-          -var cluster_name=${{ env.CLUSTER_NAME }} -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
-          EOF)
-          echo "tf-args=$TF_ARGS" >> $GITHUB_OUTPUT
-
   cluster:
-    needs: prepare
     uses: ./.github/workflows/tf-plan-and-apply.yaml
     with:
       apply: false
       working-directory: ./cluster
-      tf-args: ${{ needs.prepare.outputs.cluster-args }}
     secrets: inherit

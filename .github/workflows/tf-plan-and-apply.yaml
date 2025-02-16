@@ -5,10 +5,6 @@ on:
         type: string
         description: Directory containing Terraform files
         required: true
-      tf-args:
-        type: string
-        description: Additional arguments to pass to terraform plan and apply steps
-        required: false
       apply:
         type: boolean
         description: Whether to apply the changes or not
@@ -41,7 +37,9 @@ jobs:
       - name: Terraform plan
         id: tf-plan
         run: |
-          terraform plan -no-color -input=false -out tf_plan.txt ${{ inputs.tf-args }}
+          terraform plan -no-color -input=false -out tf_plan.txt \
+            -var cluster_name=${{ env.CLUSTER_NAME }} \
+            -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Output Plan Summary
         run: |
