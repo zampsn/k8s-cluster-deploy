@@ -25,6 +25,7 @@ jobs:
       tf-args: |
         -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
         -var cluster_name=${{ env.CLUSTER_NAME }}
+    secrets: inherit
 
   #
   #    name: Create cluster with Terraform
