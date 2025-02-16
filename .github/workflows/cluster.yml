@@ -1,32 +1,29 @@
-name: Initialize K8s Cluster on DigitalOcean
+name: Create K8s Cluster on DigitalOcean
 
 on:
   workflow_dispatch:
-    inputs:
-      cluster-name:
-        type: string
-        required: false
-        description: Name of the K8s cluster
-        default: main
   pull_request:
     branches: [ main ]
     paths:
-      - init-cluster/**
-      - .github/workflows/init-cluster.yml
+      - ../../terraform/**
+      - .github/workflows/cluster.yml
   push:
     branches: [ main ]
     paths:
-      - init-cluster/**
-      - .github/workflows/init-cluster.yml
+      - ../../terraform/**
+      - .github/workflows/cluster.yml
+
+env:
+  CLUSTER_NAME: main
 
 jobs:
   terraform:
-    name: Run the Terraform Deployment
+    name: Create ${{ env.CLUSTER_NAME }} cluster
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
-        working-directory: ./init-cluster
+        working-directory: ./terraform
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,15 +43,15 @@ jobs:
         run: terraform validate
 
       - name: Terraform plan
-        if: ${{ github.event_name != 'workflow_dispatch' }}
+        if: ${{ github.ref != 'refs/heads/main' }}
         id: tf-plan
         run: |
           terraform plan -no-color -input=false \
             -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
-            -var cluster_name=${{ inputs.cluster-name || 'main' }}
+            -var cluster_name=${{ env.CLUSTER_NAME }}
 
       - name: Output Plan Summary
-        if: ${{ github.event_name != 'workflow_dispatch' }}
+        if: ${{ github.ref != 'refs/heads/main' }}
         run: |
           echo "# :gear: Init Cluster :gear:" >> $GITHUB_STEP_SUMMARY
           echo "## :book: Terraform Plan" >> $GITHUB_STEP_SUMMARY
@@ -62,14 +59,42 @@ jobs:
 
       - name: Terraform Apply
         id: tf-apply
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           terraform apply -auto-approve -no-color -input=false \
             -var digitalocean_token=${{ secrets.DIGITALOCEAN_TOKEN }} \
             -var cluster_name=${{ inputs.cluster-name }}
 
       - name: Output Apply Summary
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  ingress:
+    name: Create Nginx ingress
+    runs-on: ubuntu-latest
+    needs: terraform
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Install Kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Save kubeconfig
+        run: doctl kubernetes cluster kubeconfig save ${{ env.CLUSTER_NAME }}
+
+      - name: Deploy Nginx ingress controller
+        run: |
+          helm upgrade --install ingress-nginx ingress-nginx \
+            --repo https://kubernetes.github.io/ingress-nginx \
+            --namespace ingress-nginx --create-namespace \
+            --set controller.replicaCount=2 \
+            --set fullnameOverride=nginx
