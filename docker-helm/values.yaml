@@ -1,6 +1,7 @@
 containerPort: 8080
 name: hello-world
 image: docker.io/zachsampson/go-hello:latest
+replicas: 3
 ingress:
   enabled: true
   host: ''
