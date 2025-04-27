@@ -74,6 +74,7 @@ jobs:
           echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   ingress:
+    needs: create-cluster
     uses: ./.github/workflows/setup-ingress.yml
     with:
       apply: ${{ github.ref == 'refs/heads/main' }}
