@@ -10,7 +10,6 @@ on:
 env:
   CLUSTER_NAME: main
   CLOUDFLARE_DOMAIN: zachsampson.dev
-  APPLY: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
   create-cluster:
@@ -63,13 +62,13 @@ jobs:
           path: ./terraform/cluster/tf_plan.txt
 
       - name: Terraform Apply
-        if: ${{ env.APPLY == 'true' && steps.tf-plan.outputs.has-changes == 'true' }}
+        if: ${{ github.ref == 'refs/heads/main' && steps.tf-plan.outputs.has-changes == 'true' }}
         id: tf-apply
         run: |
           terraform apply ./tf_plan.txt
 
       - name: Output Apply Summary
-        if: ${{ env.APPLY == 'true' && steps.tf-plan.outputs.has-changes == 'true' }}
+        if: ${{ github.ref == 'refs/heads/main' && steps.tf-plan.outputs.has-changes == 'true' }}
         run: |
           echo "## :shipit: Terraform Apply" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`${{ steps.tf-apply.outputs.stdout }}\`\`\`" >> $GITHUB_STEP_SUMMARY
@@ -77,4 +76,4 @@ jobs:
   ingress:
     uses: ./.github/workflows/setup-ingress.yml
     with:
-      apply: ${{ env.APPLY == 'true' }}
+      apply: ${{ github.ref == 'refs/heads/main' }}
