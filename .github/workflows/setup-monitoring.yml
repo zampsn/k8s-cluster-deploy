@@ -1,0 +1,22 @@
+name: Setup Monitoring Tools
+
+on:
+  workflow_dispatch:
+    inputs:
+      cluster-name:
+        type: string
+        description: The name of the K8s cluster to setup ingress for
+        required: true
+        default: main
+  workflow_call:
+    inputs:
+      cluster-name:
+        type: string
+        description: The cluster to setup monitoring tools for
+        required: true
+
+jobs:
+  grafana:
+    name: Deploy Grafana
+    runs-on: ubuntu-latest
+    concurrency: ${{ github.repository }}-${{ inputs.cluster-name }}-monitoring
