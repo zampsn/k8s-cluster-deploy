@@ -23,8 +23,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - uses: ./.github/actions/kubeconfig
         with:
           cluster-name: ${{ inputs.cluster-name }}
           digitalocean-token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Add helm repositories
+        run: |
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Install grafana
+        run: |
+          helm upgrade --install grafana grafana/grafana \ 
+            --namespace monitoring --create-namespace \
+            --values ./resources/monitoring/values.yaml

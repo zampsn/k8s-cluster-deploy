@@ -1,0 +1,9 @@
+persistence:
+  type: pvc
+  enabled: true
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - grafana.main-cluster.zachsampson.dev
