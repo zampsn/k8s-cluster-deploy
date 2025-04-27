@@ -78,4 +78,6 @@ jobs:
     uses: ./.github/workflows/setup-ingress.yml
     with:
       apply: ${{ github.ref == 'refs/heads/main' }}
+      domain: zachsampson.dev
+      cluster-name: main
     secrets: inherit

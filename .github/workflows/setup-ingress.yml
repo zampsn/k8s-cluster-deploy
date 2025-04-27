@@ -8,6 +8,17 @@ on:
         description: Whether to apply the changes
         required: false
         default: false
+      domain:
+        type: string
+        description: The Cloudflare domain to create
+        required: true
+        default: zachsampson.dev
+      cluster-name:
+        type: string
+        description: The name of the K8s cluster to setup ingress for
+        required: true
+        default: main
+
   workflow_call:
     inputs:
       apply:
@@ -15,6 +26,14 @@ on:
         description: Whether to apply the changes
         required: false
         default: false
+      domain:
+        type: string
+        description: The Cloudflare domain to create
+        required: true
+      cluster-name:
+        type: string
+        description: The name of the K8s cluster to setup ingress for
+        required: true
 
 jobs:
   ingress-nginx:
@@ -36,7 +55,7 @@ jobs:
         uses: azure/setup-helm@v3
 
       - name: Save kubeconfig
-        run: doctl kubernetes cluster kubeconfig save ${{ env.CLUSTER_NAME }}
+        run: doctl kubernetes cluster kubeconfig save ${{ inputs.cluster-name }}
 
       - name: Dry run Nginx ingress controller
         if: ${{ !inputs.apply }}
@@ -108,8 +127,8 @@ jobs:
         run: |
           terraform plan -no-color -input=false -out tf_plan.txt \
             -var cloudflare_token=${{ secrets.CLOUDFLARE_TOKEN }} \
-            -var cloudflare_domain=${{ env.CLOUDFLARE_DOMAIN }} \
-            -var subdomain_name="*.${{ env.CLUSTER_NAME }}-cluster" \
+            -var cloudflare_domain=${{ inputs.domain }} \
+            -var subdomain_name="*.${{ inputs.cluster-name }}-cluster" \
             -var target_ip=${{ needs.ingress-nginx.outputs.external-ip }}
           
           if terraform show -no-color tf_plan.txt | grep -q "No changes."; then
