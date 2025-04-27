@@ -20,3 +20,8 @@ jobs:
     name: Deploy Grafana
     runs-on: ubuntu-latest
     concurrency: ${{ github.repository }}-${{ inputs.cluster-name }}-monitoring
+    steps:
+      - uses: ./.github/actions/kubeconfig
+        with:
+          cluster-name: ${{ inputs.cluster-name }}
+          digitalocean-token: ${{ secrets.DIGITALOCEAN_TOKEN }}

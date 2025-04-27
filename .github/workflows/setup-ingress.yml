@@ -43,19 +43,10 @@ jobs:
     outputs:
       external-ip: ${{ steps.loadbalancer.outputs.external-ip || '0.0.0.0' }}
     steps:
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - uses: ./.github/actions/kubeconfig
         with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-
-      - name: Install Kubectl
-        uses: azure/setup-kubectl@v3
-
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-
-      - name: Save kubeconfig
-        run: doctl kubernetes cluster kubeconfig save ${{ inputs.cluster-name }}
+          cluster-name: ${{ inputs.cluster-name }}
+          digitalocean-token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Dry run Nginx ingress controller
         if: ${{ !inputs.apply }}
