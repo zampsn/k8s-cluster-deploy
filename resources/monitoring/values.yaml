@@ -1,9 +1,16 @@
-persistence:
-  type: pvc
+grafana:
   enabled: true
+  adminPassword: ''
 
-ingress:
-  enabled: true
-  ingressClassName: nginx
-  hosts:
-    - grafana.main-cluster.zachsampson.dev
+  persistence:
+    type: pvc
+    enabled: true
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.main-cluster.zachsampson.dev
+
+alertmanager:
+  enabled: false
