@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: ${{ github.repository }}-${{ inputs.cluster-name }}-monitoring
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - uses: ./.github/actions/kubeconfig
         with:
           cluster-name: ${{ inputs.cluster-name }}
