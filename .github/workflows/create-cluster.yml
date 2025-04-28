@@ -81,3 +81,10 @@ jobs:
       domain: zachsampson.dev
       cluster-name: main
     secrets: inherit
+
+  monitoring:
+    needs: create-cluster
+    uses: ./.github/workflows/setup-monitoring.yml
+    with:
+      cluster-name: main
+    secrets: inherit

@@ -37,25 +37,19 @@ on:
 
 jobs:
   ingress-nginx:
-    concurrency: ${{ github.repository }}
+    concurrency: ${{ github.repository }}-${{ inputs.cluster-name }}-ingress
     runs-on: ubuntu-latest
     name: Create Nginx ingress controller
     outputs:
       external-ip: ${{ steps.loadbalancer.outputs.external-ip || '0.0.0.0' }}
     steps:
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/kubeconfig
         with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-
-      - name: Install Kubectl
-        uses: azure/setup-kubectl@v3
-
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-
-      - name: Save kubeconfig
-        run: doctl kubernetes cluster kubeconfig save ${{ inputs.cluster-name }}
+          cluster-name: ${{ inputs.cluster-name }}
+          digitalocean-token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Dry run Nginx ingress controller
         if: ${{ !inputs.apply }}
@@ -98,7 +92,7 @@ jobs:
           fi
 
   create-cloudflare-dns:
-    concurrency: ${{ github.repository }}
+    concurrency: ${{ github.repository }}-${{ inputs.cluster-name }}-ingress
     runs-on: ubuntu-latest
     needs: ingress-nginx
     name: Create cloudflare DNS record
