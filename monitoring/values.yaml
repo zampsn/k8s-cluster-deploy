@@ -1,0 +1,17 @@
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    adminPassword: ''
+
+    persistence:
+      type: pvc
+      enabled: true
+
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - grafana.main-cluster.zachsampson.dev
+
+  alertmanager:
+    enabled: false

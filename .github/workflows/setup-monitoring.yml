@@ -5,7 +5,7 @@ on:
     inputs:
       cluster-name:
         type: string
-        description: The name of the K8s cluster to setup ingress for
+        description: The cluster to setup monitoring tools for
         required: true
         default: main
   workflow_call:
@@ -16,8 +16,8 @@ on:
         required: true
 
 jobs:
-  prometheus:
-    name: Deploy Grafana with Prometheus
+  monitoring:
+    name: Deploy Monitoring Stack
     runs-on: ubuntu-latest
     concurrency: ${{ github.repository }}-${{ inputs.cluster-name }}-monitoring
     steps:
@@ -34,8 +34,7 @@ jobs:
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
 
-      - name: Install prometheus
+      - name: Install monitoring stack
         run: |
-          helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-            --namespace monitoring --create-namespace \
-            --values ./resources/monitoring/values.yaml
+          helm upgrade --install monitoring ./monitoring \
+            --namespace monitoring --create-namespace
