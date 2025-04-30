@@ -1,6 +1,7 @@
 name: Setup Monitoring Tools
 
 on:
+  push: # Todo: Remove this
   workflow_dispatch:
     inputs:
       cluster-name:
