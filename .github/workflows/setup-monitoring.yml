@@ -27,7 +27,7 @@ jobs:
 
       - uses: ./.github/actions/kubeconfig
         with:
-          cluster-name: ${{ inputs.cluster-name }}
+          cluster-name: ${{ inputs.cluster-name || 'main' }}
           digitalocean-token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Add helm repositories
