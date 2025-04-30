@@ -15,3 +15,42 @@ kube-prometheus-stack:
 
   alertmanager:
     enabled: false
+
+loki:
+  enabled: true
+  auth_enabled: false
+
+  minio:
+    enabled: true
+    persistence:
+      size: 10Gi
+
+#promtail:
+#  enabled: true
+#  config:
+#    clients:
+#      - url: http://loki:3100/loki/api/v1/push
+#
+#    scrape_configs:
+#      - job_name: kubernetes-pods-labels
+#        pipeline_stages:
+#          - docker: { }
+#          - cri: { }
+#        kubernetes_sd_configs:
+#          - role: pod
+#        relabel_configs:
+#          - source_labels: [ __meta_kubernetes_pod_label_log_collector ]
+#            regex: true
+#            action: keep
+#
+#          - source_labels: [ __meta_kubernetes_namespace ]
+#            target_label: namespace
+#
+#          - source_labels: [ __meta_kubernetes_pod_name ]
+#            target_label: pod
+#
+#          - source_labels: [ __meta_kubernetes_container_name ]
+#            target_label: container
+#
+#          - source_labels: [ __meta_kubernetes_pod_label_app_kubernetes_io_name ]
+#            target_label: app
