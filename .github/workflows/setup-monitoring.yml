@@ -38,5 +38,7 @@ jobs:
 
       - name: Install monitoring stack
         run: |
+          helm dependency build ./monitoring
+          helm dependency update ./monitoring
           helm upgrade --install monitoring ./monitoring \
             --namespace monitoring --create-namespace
