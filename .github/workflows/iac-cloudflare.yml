@@ -1,0 +1,54 @@
+name: IaC Cloudflare
+
+on:
+  workflow_call:
+    inputs:
+      apply:
+        description: Apply the Terraform plan
+        type: boolean
+        required: false
+        default: false
+
+env:
+  TF_WORKSPACE: zampsn
+  TF_DIRECTORY: terraform/cloudflare
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Upload configuration
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
+        id: config
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          directory: ${{ env.TF_DIRECTORY }}
+          speculative: true
+
+      - name: Terraform plan
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
+        id: plan-run
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.config.outputs.configuration_version_id }}
+          plan_only: true
+
+      - name: Get plan output
+        uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
+        id: plan-out
+        with:
+          plan: ${{ fromJSON(steps.plan-run.outputs.payload).data.relationships.plan.data.id }}
+
+      - name: Write summary
+        run: |
+          echo "# Terraform Plan" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "Plan: ${{ steps.plan-output.outputs.add }} to add, ${{ steps.plan-output.outputs.change }} to change, ${{ steps.plan-output.outputs.destroy }} to destroy." >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "[Terraform Cloud Plan](${{ steps.plan-run.outputs.run_link }})" >> $GITHUB_STEP_SUMMARY

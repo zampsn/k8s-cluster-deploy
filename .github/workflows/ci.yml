@@ -1,0 +1,11 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  cloudflare:
+    concurrency: ${{ github.repository }}-cloudflare
+    uses: ./.github/workflows/iac-cloudflare.yml
+    with:
+      apply: true
